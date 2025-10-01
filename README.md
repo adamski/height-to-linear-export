@@ -1,4 +1,4 @@
-# Height to Linear CSV Import Tool
+# Height to Linear Import Tool
 
 Transform Height JSON exports to Linear CSV import format with automated parent-child relationship handling.
 
@@ -8,213 +8,89 @@ Transform Height JSON exports to Linear CSV import format with automated parent-
 - ✅ Preserves Height IDs in issue descriptions for traceability
 - ✅ Maps teams, users, statuses, and priorities
 - ✅ Converts dates to Linear's GMT format
-- ✅ Generates parent-child relationship mapping
-- ✅ Two import strategies: auto-generated IDs or custom Height IDs
+- ✅ Automated parent-child relationship setup via Linear API
 
-## Installation
-
-Requires Python 3.7+. No additional dependencies needed (uses standard library only).
+## Quick Start
 
 ```bash
-# Make executable (optional)
-chmod +x height_to_linear.py
+# 1. Generate CSV files
+python3 height_to_linear.py
+
+# 2. Import into Linear (via CLI or web UI)
+linear-import csv
+
+# 3. Set up parent-child relationships
+export LINEAR_API_KEY="your_key_here"
+python3 update_parent_relationships.py
 ```
 
-## Usage
+**For complete step-by-step instructions, see [IMPORT_GUIDE.md](IMPORT_GUIDE.md)**
 
-### Basic Usage (Recommended)
+## Requirements
 
-Generate CSV with empty IDs (safest for two-pass import):
+- Python 3.7+
+- `requests` library (for parent relationship updates only)
 
+## Scripts
+
+### `height_to_linear.py`
+
+Transforms Height JSON export to Linear CSV format.
+
+**Basic usage:**
 ```bash
 python3 height_to_linear.py
 ```
 
-This creates:
-- `linear_import.csv` - Ready to import into Linear
-- `parent_mapping.json` - Parent-child relationships for reference
+**Options:**
+- `--input-dir PATH` - Height export directory (default: `export-2025-09-29-FevGPS`)
+- `--output FILE` - Output CSV path (default: `linear_import.csv`)
+- `--generate-both` - Generate both standard and experimental formats
+- `--use-height-ids` - Use Height IDs in CSV (experimental)
 
-### Generate Both Formats
+### `update_parent_relationships.py`
 
-Create both standard and experimental versions:
+Updates parent-child relationships in Linear after import via GraphQL API.
 
+**Usage:**
 ```bash
-python3 height_to_linear.py --generate-both
+export LINEAR_API_KEY="lin_api_..."
+python3 update_parent_relationships.py
 ```
 
-This creates:
-- `linear_import.csv` - Empty IDs (recommended)
-- `linear_import_with_ids.csv` - With Height IDs (experimental)
-- `parent_mapping.json` - Parent-child relationships
+### `identify_duplicates.py` / `delete_duplicates.py`
 
-### Custom Paths
-
-```bash
-python3 height_to_linear.py \
-  --input-dir /path/to/height/export \
-  --output my_linear_import.csv
-```
-
-### Use Height IDs (Experimental)
-
-Test if Linear accepts custom IDs:
-
-```bash
-python3 height_to_linear.py --use-height-ids
-```
-
-## Import Strategies
-
-### Strategy 1: Two-Pass Import (Recommended)
-
-This is the safest approach when Linear auto-generates IDs.
-
-**Step 1: Initial Import**
-1. Use `linear_import.csv` (empty IDs)
-2. Import into Linear via CLI importer
-3. Linear assigns new IDs (e.g., `NEW-1`, `NEW-2`, etc.)
-
-**Step 2: Update Parent Relationships**
-1. Export from Linear to get new ID mappings
-2. Use `parent_mapping.json` to match Height parent relationships
-3. Update parent-child relationships via:
-   - Linear UI (manual)
-   - Linear API (automated - see below)
-
-### Strategy 2: Height IDs (Experimental)
-
-Test if Linear preserves custom IDs from CSV.
-
-**Step 1: Test with Small Subset**
-1. Create a small CSV with ~10-20 tasks using `--use-height-ids`
-2. Import into Linear
-3. Check if Linear preserves the `T-XXX` IDs
-
-**Step 2a: If Linear Accepts Custom IDs**
-- ✅ Parent relationships will work automatically!
-- Use `linear_import_with_ids.csv` for full import
-
-**Step 2b: If Linear Rejects/Ignores Custom IDs**
-- ❌ Fall back to Strategy 1 (two-pass import)
-
-## Parent Mapping JSON Format
-
-The `parent_mapping.json` file contains Height parent-child relationships:
-
-```json
-{
-  "T-423": "T-224",
-  "T-176": "T-1",
-  "T-450": "T-224"
-}
-```
-
-Key: Child Height ID → Value: Parent Height ID
-
-## Post-Import API Script (Optional)
-
-If you need to automate parent-child relationship updates after import, you can use Linear's API:
-
-```python
-#!/usr/bin/env python3
-"""Update Linear parent-child relationships after import."""
-
-import json
-from linear import LinearClient  # pip install linear-client
-
-# Load mappings
-with open('parent_mapping.json') as f:
-    height_parents = json.load(f)
-
-# Initialize Linear client
-client = LinearClient("YOUR_LINEAR_API_TOKEN")
-
-# Get all imported issues
-issues = client.issues()  # Filter by team/project as needed
-
-# Build Height ID -> Linear ID mapping
-height_to_linear = {}
-for issue in issues:
-    # Extract Height ID from description
-    if "[Imported from Height: T-" in issue.description:
-        height_id = issue.description.split("[Imported from Height: ")[1].split("]")[0]
-        height_to_linear[height_id] = issue.id
-
-# Update parent relationships
-for child_height_id, parent_height_id in height_parents.items():
-    if child_height_id in height_to_linear and parent_height_id in height_to_linear:
-        child_linear_id = height_to_linear[child_height_id]
-        parent_linear_id = height_to_linear[parent_height_id]
-
-        client.update_issue(child_linear_id, parent_id=parent_linear_id)
-        print(f"✓ Updated {child_height_id} -> parent: {parent_height_id}")
-```
+Helper scripts for identifying and removing duplicate issues if multiple imports occurred.
 
 ## Data Mapping
 
 | Height Field | Linear Field | Notes |
 |--------------|--------------|-------|
-| `index` | ID (optional) | `T-{index}` format, or empty for auto-generation |
+| `index` | Description tag | Preserved as `[Imported from Height: T-{index}]` |
 | `name` | Title | Direct mapping |
 | `description` | Description | Cleaned, with Height ID reference added |
 | `teamIds` | Team | First team name |
 | `createdUserId` | Creator | Email from users.json |
 | `assigneesIds` | Assignee | First assignee email |
-| `status` | Status | Mapped (backLog→Backlog, done→Closed) |
+| `status` | Status | Mapped to Linear states (Backlog, Todo, In Progress, Done) |
 | `fields[Priority]` | Priority | Extracted from fields array |
-| `createdAt` | Created | Converted to GMT format |
-| `lastActivityAt` | Updated | Converted to GMT format |
-| `startedAt` | Started | Converted to GMT format |
-| `completedAt` | Completed | Converted to GMT format |
-| `parentTaskId` | Parent issue | Height ID reference |
+| `createdAt` | Created | Converted to Linear GMT format |
+| `lastActivityAt` | Updated | Converted to Linear GMT format |
+| `startedAt` | Started | Converted to Linear GMT format |
+| `completedAt` | Completed | Converted to Linear GMT format |
+| `parentTaskId` | Parent issue | Set via API after import using `parent_mapping.json` |
 
-## Troubleshooting
+## Output Files
 
-### Issue: CSV has 782 tasks but only 648 parent relationships
+- `linear_import.csv` - CSV file for Linear import (782 tasks)
+- `parent_mapping.json` - Parent-child relationships (648 pairs)
 
-**Expected.** Only tasks with parents are included in `parent_mapping.json`. Top-level tasks (134 in your case) have no parents.
+## Resources
 
-### Issue: Linear rejects custom IDs
-
-**Solution:** Use Strategy 1 (two-pass import) with empty IDs.
-
-### Issue: Date format errors
-
-The script converts ISO 8601 dates to Linear's expected format:
-- Input: `2025-01-08T10:17:10.439Z`
-- Output: `Wed Jan 08 2025 10:17:10 GMT+0000 (GMT)`
-
-If dates don't import correctly, verify Linear's expected format hasn't changed.
-
-### Issue: Team/User not found
-
-**Check:** Ensure the Height export includes complete `teams.json` and `users.json` files.
-
-## Command Reference
-
-```bash
-# Show help
-python3 height_to_linear.py --help
-
-# Default (empty IDs)
-python3 height_to_linear.py
-
-# Generate both formats
-python3 height_to_linear.py --generate-both
-
-# Use Height IDs
-python3 height_to_linear.py --use-height-ids
-
-# Custom paths
-python3 height_to_linear.py --input-dir PATH --output FILE
-```
+- [IMPORT_GUIDE.md](IMPORT_GUIDE.md) - Complete step-by-step import workflow
+- [Linear Import Docs](https://linear.app/docs/import-issues)
+- [Linear API Docs](https://developers.linear.app/docs)
 
 ## License
 
 MIT
-
-## Support
-
-For issues or questions, please refer to:
-- Linear Import Docs: https://linear.app/docs/import-issues
-- Linear CLI Importer: https://github.com/linear/linear/tree/master/packages/import# height-to-linear-export
