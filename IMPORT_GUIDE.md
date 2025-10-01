@@ -100,19 +100,6 @@ pip3 install requests
 
 Now we'll use the API script to set up the parent-child relationships.
 
-### Set up your API key
-
-```bash
-# macOS/Linux
-export LINEAR_API_KEY="lin_api_YOUR_KEY_HERE"
-
-# Windows (Command Prompt)
-set LINEAR_API_KEY=lin_api_YOUR_KEY_HERE
-
-# Windows (PowerShell)
-$env:LINEAR_API_KEY="lin_api_YOUR_KEY_HERE"
-```
-
 ### Run the parent relationship updater
 
 ```bash
@@ -121,6 +108,16 @@ python3 update_parent_relationships.py
 
 ### Follow the prompts
 
+The script will prompt you for:
+
+**1. Linear API Key** (hidden input for security):
+```
+Linear API Key required.
+Get your API key from: Linear Settings > API > Personal API keys
+Enter your Linear API key: [hidden input]
+```
+
+**2. Team Filter** (optional):
 ```
 Filter by team key? (e.g., 'NODE', or press Enter to skip):
 ```
@@ -186,10 +183,6 @@ If everything is correct, you should see:
 ---
 
 ## Troubleshooting
-
-### Issue: "LINEAR_API_KEY environment variable not set"
-
-**Solution:** Make sure you've exported your API key (see Step 5)
 
 ### Issue: "No issues found with Height ID tags"
 
@@ -263,14 +256,11 @@ linear-import csv
 # Step 4: Install Python dependencies
 pip install requests
 
-# Step 5: Set API key
-export LINEAR_API_KEY="lin_api_YOUR_KEY_HERE"
-
-# Step 5: Update parent relationships
+# Step 5: Update parent relationships (prompts for API key)
 python3 update_parent_relationships.py
 
-# Verify
-python3 update_parent_relationships.py  # Should show "already set correctly"
+# Verify (run again, should show "already set correctly")
+python3 update_parent_relationships.py
 ```
 
 ---

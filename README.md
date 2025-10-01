@@ -19,8 +19,7 @@ python3 height_to_linear.py
 # 2. Import into Linear (via CLI or web UI)
 linear-import csv
 
-# 3. Set up parent-child relationships
-export LINEAR_API_KEY="your_key_here"
+# 3. Set up parent-child relationships (prompts for API key)
 python3 update_parent_relationships.py
 ```
 
@@ -50,12 +49,14 @@ python3 height_to_linear.py
 
 ### `update_parent_relationships.py`
 
-Updates parent-child relationships in Linear after import via GraphQL API.
+Updates parent-child relationships in Linear after import via GraphQL API. Prompts interactively for your Linear API key.
 
 **Usage:**
 ```bash
-export LINEAR_API_KEY="lin_api_..."
 python3 update_parent_relationships.py
+# Prompts for API key (hidden input)
+# Prompts for team filter (optional)
+# Shows preview and asks for confirmation
 ```
 
 ## Data Mapping

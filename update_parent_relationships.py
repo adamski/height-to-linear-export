@@ -9,13 +9,13 @@ This script:
 4. Updates parent-child relationships via Linear API
 
 Requirements:
-    pip install gql requests python-graphql-client
+    pip install requests
 
 Usage:
-    export LINEAR_API_KEY="your_api_key_here"
     python3 update_parent_relationships.py
 """
 
+import getpass
 import json
 import os
 import re
@@ -177,19 +177,17 @@ def load_parent_mapping(file_path: str = "parent_mapping.json") -> Dict[str, str
 
 
 def main():
-    # Get API key from environment
-    api_key = os.environ.get("LINEAR_API_KEY")
-    if not api_key:
-        print("Error: LINEAR_API_KEY environment variable not set.")
-        print("\nTo get your API key:")
-        print("1. Go to Linear Settings > API")
-        print("2. Create a new Personal API key")
-        print("3. Export it: export LINEAR_API_KEY='your_key_here'")
-        sys.exit(1)
-
     print("="*70)
     print("Linear Parent-Child Relationship Updater")
     print("="*70)
+
+    # Get API key interactively
+    print("\nLinear API Key required.")
+    print("Get your API key from: Linear Settings > API > Personal API keys")
+    api_key = getpass.getpass("Enter your Linear API key: ").strip()
+    if not api_key:
+        print("Error: API key is required.")
+        sys.exit(1)
 
     # Optional: filter by team
     team_key = input("\nFilter by team key? (e.g., 'NODE', or press Enter to skip): ").strip()
