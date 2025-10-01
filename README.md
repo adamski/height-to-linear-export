@@ -58,10 +58,6 @@ export LINEAR_API_KEY="lin_api_..."
 python3 update_parent_relationships.py
 ```
 
-### `identify_duplicates.py` / `delete_duplicates.py`
-
-Helper scripts for identifying and removing duplicate issues if multiple imports occurred.
-
 ## Data Mapping
 
 | Height Field | Linear Field | Notes |
@@ -82,8 +78,8 @@ Helper scripts for identifying and removing duplicate issues if multiple imports
 
 ## Output Files
 
-- `linear_import.csv` - CSV file for Linear import (782 tasks)
-- `parent_mapping.json` - Parent-child relationships (648 pairs)
+- `linear_import.csv` - CSV file for initial Linear import
+- `parent_mapping.json` - Parent-child relationships
 
 ## Resources
 
