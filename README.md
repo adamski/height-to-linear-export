@@ -4,11 +4,11 @@ Transform Height JSON exports to Linear CSV import format with automated parent-
 
 ## Features
 
-- ✅ Converts Height JSON export to Linear CSV format
-- ✅ Preserves Height IDs in issue descriptions for traceability
-- ✅ Maps teams, users, statuses, and priorities
-- ✅ Converts dates to Linear's GMT format
-- ✅ Automated parent-child relationship setup via Linear API
+- Converts Height JSON export to Linear CSV format
+- Preserves Height IDs in issue descriptions for traceability
+- Maps teams, users, statuses, and priorities
+- Converts dates to Linear's GMT format
+- Automated parent-child relationship setup via Linear API
 
 ## Quick Start
 
